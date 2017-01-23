@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+	
+  <h2>Salt & Sugar Consumption</h2>
+  
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<script>
+// set the dimensions of the bar chart
+var margin = {top: 20, right: 20, bottom: 100, left: 80},
+    width = 1000 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+var tooltip = d3.select("body").append("div").attr("class", "toolTip");
+
+// set the ranges
+var x = d3.scale.ordinal().rangeRoundBands([0, width], .5);
+
+var y = d3.scale.linear().range([height, 10]);
+
+// define the axis
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .ticks(10);
+
+var color="black";
+ 
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", 
+          "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+d3.json("outputjson/saltsugarconsumption.json", function(error, data) {
+
+    data.forEach(function(d) {
+        d.countryname = d.countryname;
+        d.saltconsumption = +d.saltconsumption;
+        d.sugarconsumption = +d.sugarconsumption;
+    });
+	
+  
+  x.domain(data.map(function(d) { return d.countryname; }));
+  y.domain([0, d3.max(data, function(d) { return d.saltconsumption + d.sugarconsumption; })]);
+
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+      .selectAll("text")
+      .style("text-anchor", "end")
+      .attr("dx", "-.8em")
+      .attr("dy", "-.55em")
+      .attr("transform", "rotate(-90)" );
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 5)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("saltconsumption");
+
+
+
+  svg.selectAll("bar")
+      .data(data)
+      .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.countryname); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.saltconsumption); })
+      .attr("height", function(d) { return height - y(d.saltconsumption); })
+      .on("mousemove", function(d){
+               tooltip
+              .style("left", d3.event.pageX - 50 + "px")
+              .style("top", d3.event.pageY - 70 + "px")
+              .style("display", "inline-block")
+              .html("Salt:<br>"+d.countryname + "<br>"  + (d.saltconsumption)+"kg");
+        })
+        .on("mouseout", function(d){ tooltip.style("display", "none");});
+      
+
+      svg.selectAll("bar")
+      .data(data)
+      .enter()
+      .append("rect")
+      .attr("class", "black")
+      .attr("x", function(d) { return x(d.countryname); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.sugarconsumption); })
+      .attr("height", function(d) { return y(d.saltconsumption)-y(d.sugarconsumption); })
+      .on("mousemove", function(d){
+               tooltip
+              .style("left", d3.event.pageX - 50 + "px")
+              .style("top", d3.event.pageY - 70 + "px")
+              .style("display", "inline-block")
+              .style("background","blue")
+              .html("Sugar:<br>"+d.countryname + "<br>"  + (d.sugarconsumption)+"kg");
+        })
+        .on("mouseout", function(d){ tooltip.style("display", "none").style("background","#FA46D0");});
+      ;
+  var showText = svg.selectAll(".legend")
+         .data(color)
+       .enter().append("g")
+         .attr("class", "legend")
+         .attr("transform", function(d, i) { if(i<2) return "translate(0," + i * 20 +")"; });
+
+
+     showText.append("rect")
+         .attr("x", width - 18)
+         .attr("width", 18)
+         .attr("height", 18)
+         .style("fill", function(d,i){if(i==0){return 'black';} else if(i==1){ return ' lightgreen';}});
+
+     showText.append("text")
+         .attr("x", width - 24)
+         .attr("y", 10)
+         .attr("dy", ".35em")
+         .style("text-anchor", "end")
+         .text(function(d,i){if(i==0){return 'sugar';} else if(i==1){ return 'salt';}});
+
+});
+
+</script>
+
+</body>
+</html>
